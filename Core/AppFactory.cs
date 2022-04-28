@@ -1,20 +1,22 @@
 ﻿using FlaUI.Core;
+using FlaUI.Core.AutomationElements;
+using FlaUI.UIA3;
+using FlaUIPractice.Data;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace FlaUIPractice.Core
 {
     public static class AppFactory
     {
-        private static Application instance;
+        private static Window instance;
 
-        public static Application Instance()
+        public static Window Instance()
         {
             if (instance == null)
             {
-                instance = Application.Launch("notepad.exe");
-                // some logic
+                var app = Application.Launch(AppData.AppPath);
+                app.WaitWhileBusy(TimeSpan.FromSeconds(10));
+                instance = app.GetMainWindow(new UIA3Automation()).WaitUntilEnabled(TimeSpan.FromSeconds(10));
                 return instance;
             }    
 
@@ -23,7 +25,7 @@ namespace FlaUIPractice.Core
 
         public static void QuitApp()
         {
-            instance.Close(killIfCloseFails: true);
+            instance.Close();
             instance = null;
         }
     }

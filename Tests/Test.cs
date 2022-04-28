@@ -12,8 +12,8 @@ namespace FlaUIPractice
         public void CreateAndDeleteNewPlaylistInSpotify()
         {
             MainPage.Instance().ClickPageElements(MainPage.Instance().PageElements.CreateNewPalylistButton);
-            var label2 = MainPage.Instance().FindElementByXpath(MainPage.Instance().PageElements.EditPlaylistDetailsButton);
-            Assert.IsTrue(label2.IsAvailable);
+            var label = MainPage.Instance().FindElementByXpath(MainPage.Instance().PageElements.EditPlaylistDetailsButton);
+            Assert.IsTrue(label.IsAvailable);
 
             MainPage.Instance().ClickPageElements(MainPage.Instance().PageElements.MoreOptionsForPlaylistButton);
             MainPage.Instance().ClickPageElements(MainPage.Instance().PageElements.DeletePlaylistOptionInDropdownMenu);

@@ -8,13 +8,13 @@ namespace FlaUIPractice.Pages
     public class BasePage
     {
         private protected static Window _appWindow;
-        private static BasePage basePage;
+        private static BasePage _basePage;
         private protected BasePage()
         {
             _appWindow = AppWindowHelper.AppWindow;
         }
 
-        public static BasePage Instance() => basePage ?? new BasePage();
+        public static BasePage Instance() => _basePage ?? new BasePage();
 
 
         public void ClickPageElements(string Xpath)

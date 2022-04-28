@@ -6,13 +6,13 @@ namespace FlaUIPractice.Pages
     public class MainPage : BasePage
     {
         private protected static Window _appWindow;
-        private static MainPage mainPage;
-        protected MainPage()
+        private static MainPage _mainPage;
+        private protected MainPage()
         {
             _appWindow = AppWindowHelper.AppWindow;
         }
 
-        public static new MainPage Instance() => mainPage ?? new MainPage();
+        public static new MainPage Instance() => _mainPage ?? new MainPage();
 
         public Elements PageElements => new Elements();
         public sealed class Elements
