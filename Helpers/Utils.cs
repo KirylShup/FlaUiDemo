@@ -1,4 +1,5 @@
 ﻿using FlaUI.Core.AutomationElements;
+using FlaUI.Core.Capturing;
 using FlaUI.Core.Input;
 using FlaUI.Core.Tools;
 using NUnit.Framework;
@@ -84,21 +85,95 @@ namespace FlaUIPractice.Helpers
             string expectedPath = Path.Combine(path, Path.GetFileNameWithoutExtension(resourceName) + "-expected.png");
             string actualPath = Path.Combine(path, Path.GetFileNameWithoutExtension(resourceName)+ "-actual.png");
 
-            // saving file logic here
+            Utils.SaveToPng(expectedPath, expected);
+            Console.WriteLine(@"Expected bitmap saved to" + expectedPath);
 
+            Utils.SaveToPng(actualPath, actual);
+            Console.WriteLine(@"Actual bitmap saved to" + actualPath);
 
+            var byteExpected = expected.ImageToByteArray();
+            var byteActual = actual.ImageToByteArray();
+
+            if(byteExpected.Length == byteActual.Length)
+            {
+                var byteDiff = new byte[byteExpected.Length];
+                for (int i = 0; i < byteExpected.Length; i++)
+                {
+                    if((i + 1) % 4 == 0)
+                    {
+                        byteDiff[i] = (byte)((byteActual[i] + byteExpected[i]) / 2);
+                    }
+                    else 
+                    {
+                        byteDiff[i] = (byte)(Math.Abs(byteActual[i] - byteExpected[i]));
+                    }
+                }
+
+                var diffBmp = new WriteableBitmap(expected.PixelWidth, expected.PixelHeight, expected.DpiX, expected.DpiY, expected.Format, expected.Palette);
+                diffBmp.WritePixels(new System.Windows.Int32Rect(0, 0, expected.PixelWidth, expected.PixelHeight), byteDiff, expected.BackBufferStride, 0);
+                string diffPath = Path.Combine(path, Path.GetFileNameWithoutExtension(resourceName) + "-diff.png");
+                Utils.SaveToPng(diffPath, diffBmp);
+                Console.WriteLine(@"Difference bitmap saved to" + diffPath);
+            }
         }
 
-        private static byte[] ImageToByteArray(this WriteableBitmap wbm)
+        public static void SaveToPng (string fileName, WriteableBitmap bmp)
         {
-            int stride = wbm.PixelWidth * wbm.Format.BitsPerPixel / 8;
-            int size = stride * wbm.PixelHeight;
+            var path = Path.GetDirectoryName(fileName);
+            if(!string.IsNullOrEmpty(path))
+            {
+                if (Directory.Exists(path))
+                {
+                    Directory.CreateDirectory(path);
+                }
 
-            byte[] buffer = new byte[size];
+                PngBitmapEncoder pngEncoder = new PngBitmapEncoder();
+                pngEncoder.Frames.Add(BitmapFrame.Create(bmp));
+                using var fileStream = File.Create(fileName);
+                pngEncoder.Save(fileStream);
+            }
+        }
 
-            wbm.CopyPixels(buffer, stride, 0);
+        public static WriteableBitmap LoadFromPng(string fileName)
+        {
+            WriteableBitmap bmp;
 
-            return buffer;
+            using (var fileStream = File.OpenRead(fileName))
+            {
+                bmp = DecodePngStream(fileStream);
+            }
+
+            return bmp;
+        }
+
+        public static WriteableBitmap ConvertToWritableBitmap(CaptureImage image)
+        {
+            using var ms = new MemoryStream();
+            image.Bitmap.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
+            var decoder = new PngBitmapDecoder(ms, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.Default);
+            BitmapSource bitmapSource = decoder.Frames[0];
+
+            return new WriteableBitmap(bitmapSource);
+        }
+
+        private static WriteableBitmap DecodePngStream(Stream pngStream)
+        {
+            var decoder = new PngBitmapDecoder(pngStream, BitmapCreateOptions.PreservePixelFormat, BitmapCacheOption.Default);
+            BitmapSource bitmapSource = decoder.Frames[0];
+
+            return new WriteableBitmap(bitmapSource);
+        }
+
+        private static byte[] ImageToByteArray(this WriteableBitmap bmp)
+        {
+            var width = bmp.PixelWidth;
+            var height = bmp.PixelHeight;
+            var stride = width * ((bmp.Format.BitsPerPixel + 7) / 8);
+
+            var bitmapData = new byte[height * stride];
+            bmp.CopyPixels(bitmapData, stride, 0);
+
+            return bitmapData;
         }
 
         public static Point GetClickingPointOfElement(AutomationElement element)
